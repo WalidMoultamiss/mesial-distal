@@ -87,7 +87,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         <div className="flex-1 w-full flex flex-col gap-1 relative">
           <div className="flex justify-between items-end mb-1">
             <span className="text-sm font-semibold text-slate-700">
-              Step <span className="text-teal-700 text-lg">{currentStep}</span> <span className="text-slate-400 font-normal">/ {maxSteps-1}</span>
+              Step <span className="text-teal-700 text-lg">{currentStep}</span> <span className="text-slate-400 font-normal">/ {maxSteps}</span>
             </span>
             <div className="flex items-center gap-2">
                <span className="text-xs font-medium uppercase tracking-wider text-slate-400 hidden sm:inline-block">
@@ -107,7 +107,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
             <input
               type="range"
               min={0}
-              max={maxSteps -1}
+              max={maxSteps}
               value={currentStep}
               onChange={(e) => onStepChange(parseInt(e.target.value))}
               className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal-600 relative z-10"
@@ -136,7 +136,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
           <div className="flex justify-between text-[10px] text-slate-400 px-1 mt-2">
             <span>0</span>
             <span>{Math.round(maxSteps / 2)}</span>
-            <span>{maxSteps-1}</span>
+            <span>{maxSteps}</span>
           </div>
         </div>
       </div>

@@ -336,17 +336,7 @@ export const JsonUploader: React.FC<JsonUploaderProps> = ({ onDataLoaded }) => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Auth Token (Optional)</label>
-                <input 
-                  type="password"
-                  placeholder="Simse token (if not using environment defaults)"
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm"
-                  value={authToken}
-                  onChange={(e) => setAuthToken(e.target.value)}
-                />
-                <p className="text-xs text-slate-400">Leave empty if you don't have a specific token.</p>
-              </div>
+              
 
               {error && (
                 <div className="flex items-center gap-2 text-red-600 bg-red-50 p-3 rounded-lg text-sm mt-2">

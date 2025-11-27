@@ -18,7 +18,9 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const timerRef = useRef<number | null>(null);
 
-  const maxSteps = data ? Math.max(data.upperEndIn, data.lowerEndIn, 40) : 0; 
+  // const maxSteps = data ? (data.upperEndIn > data.lowerEndIn) data.upperEndIn : data.lowerEndIn : 0; 
+  const maxSteps = data ? data?.maxAligners : 0;
+  console.log("Upper End In:", data?.upperEndIn, "Lower End In:", data?.lowerEndIn, "Max Steps:", maxSteps);
 
   // Reset state when new data loads
   const handleDataLoad = (newData: DentalSetup) => {
