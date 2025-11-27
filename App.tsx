@@ -7,7 +7,7 @@ import { GlobalTimeline } from './components/GlobalTimeline';
 import { StepsBreakdown } from './components/StepsBreakdown';
 import { PlaybackControls } from './components/PlaybackControls';
 import { DentalSetup } from './types';
-import { LayoutDashboard, ArrowLeft } from 'lucide-react';
+import { LayoutDashboard, ArrowLeft, Download } from 'lucide-react';
 
 export default function App() {
   const [data, setData] = useState<DentalSetup | null>(null);
@@ -42,6 +42,20 @@ export default function App() {
     };
     setData(newData);
     setCurrentStep(newMax); // Jump to new step
+  };
+
+  const handleDownload = () => {
+    if (!data) return;
+    const jsonString = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const href = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = href;
+    link.download = `orthoplan-${data.id || "setup"}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(href);
   };
 
   const togglePlay = () => {
@@ -103,13 +117,23 @@ export default function App() {
           <span className="mx-2 text-slate-300">|</span>
           <span className="text-sm text-slate-500 font-medium">{data.setupName}</span>
         </div>
-        <button 
-          onClick={() => { setData(null); setSelectedTooth(null); setIsPlaying(false); }}
-          className="text-sm font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors"
-        >
-          <ArrowLeft size={16} />
-          Upload New File
-        </button>
+        <div className="flex items-center gap-2">
+           <button 
+            onClick={handleDownload}
+            className="text-sm font-medium text-teal-600 hover:text-teal-700 bg-teal-50 hover:bg-teal-100 px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
+            title="Download JSON"
+          >
+            <Download size={16} />
+            Download
+          </button>
+          <button 
+            onClick={() => { setData(null); setSelectedTooth(null); setIsPlaying(false); }}
+            className="text-sm font-medium text-slate-500 hover:text-slate-800 px-3 py-1.5 hover:bg-slate-100 rounded-lg flex items-center gap-1 transition-colors"
+          >
+            <ArrowLeft size={16} />
+            Upload New File
+          </button>
+        </div>
       </header>
 
       {/* Main Content Area */}
@@ -120,6 +144,7 @@ export default function App() {
           
           {/* Playback Controls (Sticky Top) */}
           <PlaybackControls 
+            data={data}
             currentStep={currentStep}
             maxSteps={maxSteps}
             isPlaying={isPlaying}

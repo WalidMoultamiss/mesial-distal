@@ -1,6 +1,6 @@
 import React from 'react';
 import { DentalSetup, Attachment, IprEntry } from '../types';
-import { Timer, ArrowRightLeft, Plus, Trash2, Save, X } from 'lucide-react';
+import { Timer, ArrowRightLeft, Plus, Trash2, X } from 'lucide-react';
 
 interface ToothDetailsProps {
   data: DentalSetup;
@@ -96,6 +96,30 @@ export const ToothDetails: React.FC<ToothDetailsProps> = ({
     onUpdate({ ...data, iprList: newIprList });
   };
 
+  // --- Visual IPR Logic ---
+  // Determine Quadrant to map Left/Right visual sides to Mesial/Distal data
+  // Q1 (11-18) & Q4 (41-48): Mesial = Right, Distal = Left
+  // Q2 (21-28) & Q3 (31-38): Mesial = Left, Distal = Right
+  const firstDigit = toothId.charAt(0);
+  const isQ1orQ4 = firstDigit === '1' || firstDigit === '4';
+
+  const mesialVal = currentStepIpr?.mesialIpr || 0;
+  const distalVal = currentStepIpr?.distalIpr || 0;
+
+  // Visual Props Mapping
+  const leftSide = {
+    label: isQ1orQ4 ? 'Distal' : 'Mesial',
+    value: isQ1orQ4 ? distalVal : mesialVal,
+    onChange: (val: string) => handleUpdateIpr(isQ1orQ4 ? 'distalIpr' : 'mesialIpr', val),
+    color: isQ1orQ4 ? (distalVal > 0 ? 'bg-rose-500' : 'bg-slate-200') : (mesialVal > 0 ? 'bg-rose-500' : 'bg-slate-200')
+  };
+
+  const rightSide = {
+    label: isQ1orQ4 ? 'Mesial' : 'Distal',
+    value: isQ1orQ4 ? mesialVal : distalVal,
+    onChange: (val: string) => handleUpdateIpr(isQ1orQ4 ? 'mesialIpr' : 'distalIpr', val),
+    color: isQ1orQ4 ? (mesialVal > 0 ? 'bg-rose-500' : 'bg-slate-200') : (distalVal > 0 ? 'bg-rose-500' : 'bg-slate-200')
+  };
 
   return (
     <div className="bg-white border-l border-slate-200 w-full md:w-80 flex-shrink-0 flex flex-col h-full overflow-hidden">
@@ -111,38 +135,67 @@ export const ToothDetails: React.FC<ToothDetailsProps> = ({
       
       <div className="overflow-y-auto flex-1 p-4 space-y-8">
         
-        {/* IPR Editor (Current Step) */}
-        <div className="bg-rose-50 border border-rose-100 rounded-xl p-4">
-          <h4 className="text-xs font-bold text-rose-800 uppercase tracking-wider mb-3 flex items-center gap-2">
+        {/* Visual IPR Editor */}
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
             <ArrowRightLeft size={14} /> IPR at Step {currentStep}
           </h4>
           
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[10px] font-bold text-rose-600 uppercase mb-1">Mesial (mm)</label>
+          <div className="flex items-center justify-between gap-2">
+            
+            {/* Left Control */}
+            <div className="flex flex-col items-center w-20">
+              <span className="text-[10px] font-bold text-slate-400 uppercase mb-1">{leftSide.label}</span>
               <input 
-                type="number" 
+                type="number"
                 step="0.05"
                 min="0"
-                className="w-full p-2 text-sm border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-400 outline-none text-rose-900 bg-white"
-                value={currentStepIpr?.mesialIpr || 0}
-                onChange={(e) => handleUpdateIpr('mesialIpr', e.target.value)}
+                className="w-16 p-1 text-center font-mono text-sm border border-slate-300 rounded focus:ring-2 focus:ring-rose-400 focus:border-rose-400 outline-none"
+                value={leftSide.value}
+                onChange={(e) => leftSide.onChange(e.target.value)}
               />
             </div>
-            <div>
-              <label className="block text-[10px] font-bold text-rose-600 uppercase mb-1">Distal (mm)</label>
+
+            {/* Graphic */}
+            <div className="relative flex items-center justify-center">
+              {/* Left IPR Indicator */}
+              <div className={`w-2 h-16 rounded-l-full transition-colors mr-1 ${leftSide.color}`}></div>
+              
+              {/* Tooth Shape (SVG) */}
+              <svg width="60" height="80" viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-sm">
+                <path 
+                  d="M10 20C10 10 20 0 30 0C40 0 50 10 50 20V60C50 70 40 80 30 80C20 80 10 70 10 60V20Z" 
+                  fill="white" 
+                  stroke="#cbd5e1" 
+                  strokeWidth="2"
+                />
+                <path d="M15 20C15 20 20 25 30 25C40 25 45 20 45 20" stroke="#e2e8f0" strokeWidth="2" strokeLinecap="round"/>
+                <text x="30" y="50" textAnchor="middle" fontSize="16" fontWeight="bold" fill="#94a3b8" fontFamily="sans-serif">
+                  {toothId}
+                </text>
+              </svg>
+
+              {/* Right IPR Indicator */}
+              <div className={`w-2 h-16 rounded-r-full transition-colors ml-1 ${rightSide.color}`}></div>
+            </div>
+
+             {/* Right Control */}
+             <div className="flex flex-col items-center w-20">
+              <span className="text-[10px] font-bold text-slate-400 uppercase mb-1">{rightSide.label}</span>
               <input 
-                type="number" 
+                type="number"
                 step="0.05"
                 min="0"
-                className="w-full p-2 text-sm border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-400 outline-none text-rose-900 bg-white"
-                value={currentStepIpr?.distalIpr || 0}
-                onChange={(e) => handleUpdateIpr('distalIpr', e.target.value)}
+                className="w-16 p-1 text-center font-mono text-sm border border-slate-300 rounded focus:ring-2 focus:ring-rose-400 focus:border-rose-400 outline-none"
+                value={rightSide.value}
+                onChange={(e) => rightSide.onChange(e.target.value)}
               />
             </div>
+
           </div>
-          <p className="text-[10px] text-rose-500 mt-2 leading-tight">
-            Adjust values to add IPR for this specific step. Set to 0 to remove.
+          
+          <p className="text-[10px] text-slate-400 mt-4 text-center">
+             Values in mm. Red bars indicate active reduction.
           </p>
         </div>
 

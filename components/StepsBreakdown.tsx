@@ -99,7 +99,7 @@ export const StepsBreakdown: React.FC<StepsBreakdownProps> = ({ data, currentSte
               return (
                 <tr 
                   key={row.step} 
-                  ref={el => rowRefs.current[row.step] = el}
+                  ref={(el) => { rowRefs.current[row.step] = el; }}
                   className={`transition-colors duration-300 ${isActive ? 'bg-teal-50 ring-2 ring-inset ring-teal-500/20' : 'hover:bg-slate-50 group'}`}
                 >
                   <td className="px-6 py-4 border-r border-slate-100">

@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight, PlusCircle } from 'lucide-react';
+import { DentalSetup } from '../types';
 
 interface PlaybackControlsProps {
+  data: DentalSetup | null;
   currentStep: number;
   maxSteps: number;
   isPlaying: boolean;
@@ -11,6 +13,7 @@ interface PlaybackControlsProps {
 }
 
 export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
+  data,
   currentStep,
   maxSteps,
   isPlaying,
@@ -18,6 +21,20 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   onStepChange,
   onAddStep
 }) => {
+  
+  // Calculate unique steps that have IPR actions
+  const iprSteps = useMemo(() => {
+    if (!data) return [];
+    const steps = new Set<number>();
+    data.iprList.forEach(ipr => {
+      // Only include valid steps within range
+      if (ipr.step >= 0 && ipr.step <= maxSteps) {
+        steps.add(ipr.step);
+      }
+    });
+    return Array.from(steps).sort((a, b) => a - b);
+  }, [data, maxSteps]);
+
   return (
     <div className="bg-white border-b border-slate-200 p-4 sticky top-0 z-30 shadow-sm">
       <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
@@ -67,10 +84,10 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         </div>
 
         {/* Progress Bar & Label */}
-        <div className="flex-1 w-full flex flex-col gap-1">
+        <div className="flex-1 w-full flex flex-col gap-1 relative">
           <div className="flex justify-between items-end mb-1">
             <span className="text-sm font-semibold text-slate-700">
-              Step <span className="text-teal-700 text-lg">{currentStep}</span> <span className="text-slate-400 font-normal">/ {maxSteps}</span>
+              Step <span className="text-teal-700 text-lg">{currentStep}</span> <span className="text-slate-400 font-normal">/ {maxSteps-1}</span>
             </span>
             <div className="flex items-center gap-2">
                <span className="text-xs font-medium uppercase tracking-wider text-slate-400 hidden sm:inline-block">
@@ -86,22 +103,42 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
             </div>
           </div>
           
-          <input
-            type="range"
-            min={0}
-            max={maxSteps}
-            value={currentStep}
-            onChange={(e) => onStepChange(parseInt(e.target.value))}
-            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal-600"
-          />
+          <div className="relative w-full">
+            <input
+              type="range"
+              min={0}
+              max={maxSteps -1}
+              value={currentStep}
+              onChange={(e) => onStepChange(parseInt(e.target.value))}
+              className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal-600 relative z-10"
+            />
+            
+            {/* IPR Indicators Container */}
+            <div className="absolute top-3 left-0 w-full h-3 pointer-events-none">
+              {iprSteps.map((step) => (
+                <div
+                  key={step}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStepChange(step);
+                  }}
+                  className="absolute top-0 w-2 h-2 bg-rose-500 rounded-full cursor-pointer pointer-events-auto hover:scale-150 hover:ring-2 hover:ring-rose-200 transition-all z-20"
+                  style={{ 
+                    left: `${(step / maxSteps) * 100}%`, 
+                    transform: 'translateX(-50%)' 
+                  }}
+                  title={`IPR Action at Step ${step}`}
+                />
+              ))}
+            </div>
+          </div>
           
-          <div className="flex justify-between text-[10px] text-slate-400 px-1">
+          <div className="flex justify-between text-[10px] text-slate-400 px-1 mt-2">
             <span>0</span>
             <span>{Math.round(maxSteps / 2)}</span>
-            <span>{maxSteps}</span>
+            <span>{maxSteps-1}</span>
           </div>
         </div>
-
       </div>
     </div>
   );

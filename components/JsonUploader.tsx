@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Upload, FileText, AlertCircle } from 'lucide-react';
+import { Upload, FileText, AlertCircle, Cloud, ArrowRight } from 'lucide-react';
 import { DentalSetup } from '../types';
+import { getDocumentAlignersInfoV2, NemoConfig } from '../nemo-functions';
 
 interface JsonUploaderProps {
   onDataLoaded: (data: DentalSetup) => void;
@@ -21,21 +22,21 @@ const SAMPLE_JSON = {
   "maxIpr": 0,
   "manIpr": 4.7,
   "attachList": [
-    { "name": "Att_1", "tooth": "16", "beginTime": 0, "endTime": 15, "attachGuid": "..." },
-    { "name": "Att_1", "tooth": "13", "beginTime": 0, "endTime": 15, "attachGuid": "..." },
-    { "name": "Att_1", "tooth": "12", "beginTime": 0, "endTime": 15, "attachGuid": "..." },
-    { "name": "Att_1", "tooth": "22", "beginTime": 0, "endTime": 15, "attachGuid": "..." },
-    { "name": "Att_1", "tooth": "23", "beginTime": 0, "endTime": 15, "attachGuid": "..." },
-    { "name": "Att_1", "tooth": "26", "beginTime": 0, "endTime": 15, "attachGuid": "..." },
-    { "name": "Att_1", "tooth": "35", "beginTime": 0, "endTime": 46, "attachGuid": "..." },
-    { "name": "Att_1", "tooth": "33", "beginTime": 0, "endTime": 46, "attachGuid": "..." },
-    { "name": "Att_1", "tooth": "32", "beginTime": 0, "endTime": 46, "attachGuid": "..." },
-    { "name": "Att_1", "tooth": "31", "beginTime": 0, "endTime": 46, "attachGuid": "..." },
-    { "name": "Att_1", "tooth": "41", "beginTime": 0, "endTime": 46, "attachGuid": "..." },
-    { "name": "Att_1", "tooth": "42", "beginTime": 0, "endTime": 46, "attachGuid": "..." },
-    { "name": "Att_1", "tooth": "43", "beginTime": 0, "endTime": 46, "attachGuid": "..." },
-    { "name": "Att_1", "tooth": "44", "beginTime": 0, "endTime": 46, "attachGuid": "..." },
-    { "name": "Att_1", "tooth": "46", "beginTime": 0, "endTime": 46, "attachGuid": "..." }
+    { "name": "Att_1", "tooth": "16", "beginTime": 0, "endTime": 15, "attachGuid": "43C0C100-61F0-4A33-BB5A-9BAFBF6FF44A" },
+    { "name": "Att_1", "tooth": "13", "beginTime": 0, "endTime": 15, "attachGuid": "977195E7-A345-47A6-A6A0-5A7E089DD824" },
+    { "name": "Att_1", "tooth": "12", "beginTime": 0, "endTime": 15, "attachGuid": "CEDD5BAC-E87A-4864-9A7B-5AB11B4D065F" },
+    { "name": "Att_1", "tooth": "22", "beginTime": 0, "endTime": 15, "attachGuid": "3AEB752C-C854-464E-9942-A84354B2ECCD" },
+    { "name": "Att_1", "tooth": "23", "beginTime": 0, "endTime": 15, "attachGuid": "11B95267-8E81-4014-999F-5DDD51485448" },
+    { "name": "Att_1", "tooth": "26", "beginTime": 0, "endTime": 15, "attachGuid": "37D197BA-020F-4926-AE99-DBC5683FCE94" },
+    { "name": "Att_1", "tooth": "35", "beginTime": 0, "endTime": 46, "attachGuid": "65B398AC-63FD-4B8B-A150-01DD9CCA8C8D" },
+    { "name": "Att_1", "tooth": "33", "beginTime": 0, "endTime": 46, "attachGuid": "39538EEC-8B43-470D-99F3-07DA0A95840E" },
+    { "name": "Att_1", "tooth": "32", "beginTime": 0, "endTime": 46, "attachGuid": "581E045B-7113-480B-9020-2A7507EBB0F0" },
+    { "name": "Att_1", "tooth": "31", "beginTime": 0, "endTime": 46, "attachGuid": "3C569781-ACBE-4AD2-A526-043FFB6B64F8" },
+    { "name": "Att_1", "tooth": "41", "beginTime": 0, "endTime": 46, "attachGuid": "DD415B4A-ACAA-467B-8A1D-2CD8793C4929" },
+    { "name": "Att_1", "tooth": "42", "beginTime": 0, "endTime": 46, "attachGuid": "767ECB7C-B54A-4D4E-B668-4C91ECD0CEA2" },
+    { "name": "Att_1", "tooth": "43", "beginTime": 0, "endTime": 46, "attachGuid": "0C1759E6-A2A3-4C97-83C8-13B9ADB7B918" },
+    { "name": "Att_1", "tooth": "44", "beginTime": 0, "endTime": 46, "attachGuid": "D5A05D8B-2BFF-46C9-B335-9696DF88FEEA" },
+    { "name": "Att_1", "tooth": "46", "beginTime": 0, "endTime": 46, "attachGuid": "E3950FBB-AB5C-4F66-A66B-F174040C723D" }
   ],
   "precisionCutList": [],
   "iprList": [
@@ -48,8 +49,71 @@ const SAMPLE_JSON = {
 };
 
 export const JsonUploader: React.FC<JsonUploaderProps> = ({ onDataLoaded }) => {
+  const [activeTab, setActiveTab] = useState<'paste' | 'cloud'>('paste');
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  // Cloud Inputs
+  const [docId, setDocId] = useState('');
+  const [env, setEnv] = useState('production');
+  const [authToken, setAuthToken] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Adjust steps by +1 so that "step 6" in API becomes "Step 7" in Viewer.
+  const adjustSteps = (data: DentalSetup): DentalSetup => {
+    // Create a deep copy to avoid mutating the source immediately
+    const newData = JSON.parse(JSON.stringify(data));
+
+    // 1. Shift IPR steps
+    if (Array.isArray(newData.iprList)) {
+      newData.iprList = newData.iprList.map((item: any) => ({
+        ...item,
+        step: (typeof item.step === 'number' ? item.step : parseInt(item.step)) + 1
+      }));
+    }
+
+    // 2. Shift Attachment times
+    if (Array.isArray(newData.attachList)) {
+      newData.attachList = newData.attachList.map((item: any) => ({
+        ...item,
+        beginTime: (typeof item.beginTime === 'number' ? item.beginTime : parseInt(item.beginTime)) + 1,
+        endTime: (typeof item.endTime === 'number' ? item.endTime : parseInt(item.endTime)) + 1
+      }));
+    }
+
+    // 3. Shift Global Bounds
+    if (typeof newData.upperEndIn === 'number') newData.upperEndIn += 1;
+    if (typeof newData.lowerEndIn === 'number') newData.lowerEndIn += 1;
+    if (typeof newData.upperStartFrom === 'number') newData.upperStartFrom += 1;
+    if (typeof newData.lowerStartFrom === 'number') newData.lowerStartFrom += 1;
+
+    // 4. Shift Positioners (if any)
+    if (newData.positionersList) {
+      if (Array.isArray(newData.positionersList.upper)) {
+        newData.positionersList.upper = newData.positionersList.upper.map((s: number) => s + 1);
+      }
+      if (Array.isArray(newData.positionersList.lower)) {
+        newData.positionersList.lower = newData.positionersList.lower.map((s: number) => s + 1);
+      }
+    }
+
+    // 5. Shift extractions/cuts if present
+    if (Array.isArray(newData.extractList)) {
+      newData.extractList = newData.extractList.map((item: any) => ({
+         ...item,
+         step: (item.step || 0) + 1
+      }));
+    }
+    if (Array.isArray(newData.precisionCutList)) {
+      newData.precisionCutList = newData.precisionCutList.map((item: any) => ({
+         ...item,
+         beginTime: (item.beginTime || 0) + 1,
+         endTime: (item.endTime || 0) + 1
+      }));
+    }
+
+    return newData;
+  };
 
   const handleParse = () => {
     try {
@@ -58,12 +122,13 @@ export const JsonUploader: React.FC<JsonUploaderProps> = ({ onDataLoaded }) => {
         return;
       }
       const parsed = JSON.parse(input);
-      // Basic validation
       if (!parsed.id || !Array.isArray(parsed.attachList)) {
         throw new Error("Invalid format: Missing 'id' or 'attachList'.");
       }
       setError(null);
-      onDataLoaded(parsed as DentalSetup);
+      // Apply the +1 shift logic
+      const adjustedData = adjustSteps(parsed as DentalSetup);
+      onDataLoaded(adjustedData);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -71,48 +136,177 @@ export const JsonUploader: React.FC<JsonUploaderProps> = ({ onDataLoaded }) => {
 
   const loadSample = () => {
     setInput(JSON.stringify(SAMPLE_JSON, null, 2));
-    onDataLoaded(SAMPLE_JSON as any as DentalSetup);
+    // Apply the +1 shift logic to sample data too
+    const adjustedData = adjustSteps(SAMPLE_JSON as any as DentalSetup);
+    onDataLoaded(adjustedData);
+  };
+
+  const handleCloudFetch = async () => {
+    if (!docId.trim()) {
+      setError("Please enter a Document ID.");
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const config: NemoConfig = {
+        env: env,
+        authHeader: authToken.trim() ? `Simse ${authToken.trim()}` : undefined
+      };
+
+      const data = await getDocumentAlignersInfoV2(docId.trim(), config);
+      
+      if (!data) {
+        throw new Error("No data returned for this Document ID.");
+      }
+      
+      // Apply the +1 shift logic
+      const adjustedData = adjustSteps(data as DentalSetup);
+      onDataLoaded(adjustedData);
+    } catch (err) {
+      console.error(err);
+      setError((err as Error).message || "Failed to fetch data from cloud.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white rounded-xl shadow-sm border border-slate-200 mt-10">
-      <div className="text-center mb-8">
-        <div className="bg-teal-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-          <FileText className="w-8 h-8 text-teal-600" />
+    <div className="max-w-3xl mx-auto mt-10">
+      
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        {/* Tab Header */}
+        <div className="flex border-b border-slate-200">
+          <button
+            onClick={() => { setActiveTab('paste'); setError(null); }}
+            className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+              activeTab === 'paste' 
+                ? 'bg-white text-teal-600 border-b-2 border-teal-600' 
+                : 'bg-slate-50 text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <FileText size={18} />
+            Paste JSON
+          </button>
+          <button
+            onClick={() => { setActiveTab('cloud'); setError(null); }}
+            className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+              activeTab === 'cloud' 
+                ? 'bg-white text-teal-600 border-b-2 border-teal-600' 
+                : 'bg-slate-50 text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <Cloud size={18} />
+            Nemotec Cloud
+          </button>
         </div>
-        <h2 className="text-2xl font-bold text-slate-800">OrthoPlan JSON Viewer</h2>
-        <p className="text-slate-500 mt-2">Paste your setup JSON file below to visualize the treatment plan.</p>
-      </div>
 
-      <div className="space-y-4">
-        <textarea
-          className="w-full h-64 p-4 font-mono text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all resize-none"
-          placeholder="Paste JSON here..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-        />
-        
-        {error && (
-          <div className="flex items-center gap-2 text-red-600 bg-red-50 p-3 rounded-lg text-sm">
-            <AlertCircle size={16} />
-            {error}
+        <div className="p-6">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-slate-800">OrthoPlan Viewer</h2>
+            <p className="text-slate-500 mt-2">
+              {activeTab === 'paste' ? 'Paste your setup JSON file below.' : 'Fetch directly from Nemotec services.'}
+            </p>
           </div>
-        )}
 
-        <div className="flex gap-3">
-          <button
-            onClick={handleParse}
-            className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
-          >
-            <Upload size={18} />
-            Visualize Plan
-          </button>
-          <button
-            onClick={loadSample}
-            className="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            Load Sample
-          </button>
+          {activeTab === 'paste' ? (
+            <div className="space-y-4">
+              <textarea
+                className="w-full h-64 p-4 font-mono text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all resize-none"
+                placeholder="Paste JSON here..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+              />
+              
+              {error && (
+                <div className="flex items-center gap-2 text-red-600 bg-red-50 p-3 rounded-lg text-sm">
+                  <AlertCircle size={16} />
+                  {error}
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleParse}
+                  className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                >
+                  <Upload size={18} />
+                  Visualize Plan
+                </button>
+                <button
+                  onClick={loadSample}
+                  className="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  Load Sample
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 max-w-lg mx-auto">
+               <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Environment</label>
+                <select 
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                  value={env}
+                  onChange={(e) => setEnv(e.target.value)}
+                >
+                  <option value="production">Production</option>
+                  <option value="preprod">Pre-Production</option>
+                  <option value="development">Development</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Document ID (UUID)</label>
+                <input 
+                  type="text"
+                  placeholder="e.g. 57a2a6a4-bcf6..."
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none font-mono text-sm"
+                  value={docId}
+                  onChange={(e) => setDocId(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Auth Token (Optional)</label>
+                <input 
+                  type="password"
+                  placeholder="Simse token (if not using environment defaults)"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+                  value={authToken}
+                  onChange={(e) => setAuthToken(e.target.value)}
+                />
+                <p className="text-xs text-slate-400">Leave empty if you don't have a specific token.</p>
+              </div>
+
+              {error && (
+                <div className="flex items-center gap-2 text-red-600 bg-red-50 p-3 rounded-lg text-sm mt-2">
+                  <AlertCircle size={16} />
+                  {error}
+                </div>
+              )}
+
+              <button
+                onClick={handleCloudFetch}
+                disabled={isLoading}
+                className={`w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-all mt-4 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+              >
+                {isLoading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Fetching...
+                  </>
+                ) : (
+                  <>
+                    <ArrowRight size={18} />
+                    Load from Cloud
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

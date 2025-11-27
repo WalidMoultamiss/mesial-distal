@@ -9,9 +9,13 @@ interface OdontogramProps {
 }
 
 // FDI Notation
-const UPPER_RIGHT = [18, 17, 16, 15, 14, 13, 12, 11];
+// Q1: Upper Right (Patient Right) -> Displayed Left side of Upper
+const UPPER_RIGHT = [18, 17, 16, 15, 14, 13, 12, 11]; 
+// Q2: Upper Left (Patient Left) -> Displayed Right side of Upper
 const UPPER_LEFT = [21, 22, 23, 24, 25, 26, 27, 28];
+// Q4: Lower Right (Patient Right) -> Displayed Left side of Lower
 const LOWER_RIGHT = [48, 47, 46, 45, 44, 43, 42, 41];
+// Q3: Lower Left (Patient Left) -> Displayed Right side of Lower
 const LOWER_LEFT = [31, 32, 33, 34, 35, 36, 37, 38];
 
 // --- Sub-components ---
@@ -156,12 +160,18 @@ export const Odontogram: React.FC<OdontogramProps> = ({ data, currentStep, onToo
         let totalIpr = 0;
         
         if (direction === 'distal-to-mesial') {
-          // RIGHT Quadrants (e.g. 18->17). Order is Distal->Mesial.
-          // Interface is: Current Mesial + Next Distal
+          // Rule for Q1 (11-18) and Q4 (41-48):
+          // Mesial = Right (Droita), Distal = Left (Gauche).
+          // Display order is Left -> Right on screen (e.g., 18 -> 17).
+          // 18 is Left of 17.
+          // Gap touches 18's Right (Mesial) and 17's Left (Distal).
           totalIpr = currentVals.m + nextVals.d;
         } else {
-          // LEFT Quadrants (e.g. 21->22). Order is Mesial->Distal.
-          // Interface is: Current Distal + Next Mesial
+          // Rule for Q2 (21-28) and Q3 (31-38):
+          // Mesial = Left (Gauche), Distal = Right (Droita).
+          // Display order is Left -> Right on screen (e.g., 21 -> 22).
+          // 21 is Left of 22.
+          // Gap touches 21's Right (Distal) and 22's Left (Mesial).
           totalIpr = currentVals.d + nextVals.m;
         }
 
@@ -175,10 +185,14 @@ export const Odontogram: React.FC<OdontogramProps> = ({ data, currentStep, onToo
   };
 
   // Midline Calculations
-  // Upper: Between 11 (Right Q1 end) and 21 (Left Q2 start)
+  // Upper Midline: Between 11 (Q1) and 21 (Q2).
+  // 11 (Q1): Mesial is Right. Gap touches 11 Right (Mesial).
+  // 21 (Q2): Mesial is Left. Gap touches 21 Left (Mesial).
   const upperMidlineIpr = getIpr(11).m + getIpr(21).m;
   
-  // Lower: Between 41 (Right Q4 end) and 31 (Left Q3 start)
+  // Lower Midline: Between 41 (Q4) and 31 (Q3).
+  // 41 (Q4): Mesial is Right. Gap touches 41 Right (Mesial).
+  // 31 (Q3): Mesial is Left. Gap touches 31 Left (Mesial).
   const lowerMidlineIpr = getIpr(41).m + getIpr(31).m;
 
   return (
@@ -211,7 +225,7 @@ export const Odontogram: React.FC<OdontogramProps> = ({ data, currentStep, onToo
         <div className="flex flex-col items-center gap-2">
           <span className="text-xs font-bold text-slate-400 tracking-widest uppercase">Maxilla (Upper)</span>
           <div className="flex justify-center">
-            {/* Right Side (18-11) */}
+            {/* Right Side (18-11): Uses Q1 Rule (Mesial=Right) */}
             <div className="flex">
               {renderQuadrant(UPPER_RIGHT, 'distal-to-mesial')}
             </div>
@@ -221,7 +235,7 @@ export const Odontogram: React.FC<OdontogramProps> = ({ data, currentStep, onToo
                {upperMidlineIpr > 0.01 && <IprMarker value={upperMidlineIpr} />}
             </div>
 
-            {/* Left Side (21-28) */}
+            {/* Left Side (21-28): Uses Q2 Rule (Mesial=Left) */}
             <div className="flex">
               {renderQuadrant(UPPER_LEFT, 'mesial-to-distal')}
             </div>
@@ -234,7 +248,7 @@ export const Odontogram: React.FC<OdontogramProps> = ({ data, currentStep, onToo
         {/* Lower Arch */}
         <div className="flex flex-col items-center gap-2">
           <div className="flex justify-center">
-            {/* Right Side (48-41) */}
+            {/* Right Side (48-41): Uses Q4 Rule (Mesial=Right) */}
             <div className="flex">
               {renderQuadrant(LOWER_RIGHT, 'distal-to-mesial')}
             </div>
@@ -244,7 +258,7 @@ export const Odontogram: React.FC<OdontogramProps> = ({ data, currentStep, onToo
               {lowerMidlineIpr > 0.01 && <IprMarker value={lowerMidlineIpr} />}
             </div>
 
-            {/* Left Side (31-38) */}
+            {/* Left Side (31-38): Uses Q3 Rule (Mesial=Left) */}
             <div className="flex">
               {renderQuadrant(LOWER_LEFT, 'mesial-to-distal')}
             </div>
