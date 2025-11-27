@@ -1,0 +1,5 @@
+{
+  "name": "OrthoPlan Viewer",
+  "description": "A specialized viewer for visualizing dental aligner setup JSON files, including attachment placement and IPR tracking.",
+  "requestFramePermissions": []
+}
