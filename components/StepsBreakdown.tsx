@@ -9,6 +9,7 @@ interface StepsBreakdownProps {
 
 export const StepsBreakdown: React.FC<StepsBreakdownProps> = ({ data, currentStep }) => {
   const rowRefs = useRef<{ [key: number]: HTMLTableRowElement | null }>({});
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const stepsData = useMemo(() => {
     const maxStep = Math.max(
@@ -39,12 +40,25 @@ export const StepsBreakdown: React.FC<StepsBreakdownProps> = ({ data, currentSte
     return steps;
   }, [data]);
 
-  // Scroll to current step when it changes
+  // Scroll logic: Scroll the container ONLY, avoiding window scroll
   useEffect(() => {
-    if (rowRefs.current[currentStep]) {
-      rowRefs.current[currentStep]?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
+    const row = rowRefs.current[currentStep];
+    const container = containerRef.current;
+
+    if (row && container) {
+      // Calculate the position of the row relative to the container
+      const rowTop = row.offsetTop;
+      const rowHeight = row.clientHeight;
+      const containerHeight = container.clientHeight;
+
+      // Calculate the scroll position to center the row
+      // We use the container's scroll function instead of row.scrollIntoView()
+      // to prevent the main browser window from jumping.
+      const targetScrollTop = rowTop - (containerHeight / 2) + (rowHeight / 2);
+
+      container.scrollTo({
+        top: targetScrollTop,
+        behavior: 'smooth'
       });
     }
   }, [currentStep]);
@@ -60,7 +74,7 @@ export const StepsBreakdown: React.FC<StepsBreakdownProps> = ({ data, currentSte
         </div>
       </div>
       
-      <div className="overflow-y-auto flex-1">
+      <div ref={containerRef} className="overflow-y-auto flex-1 relative">
         <table className="w-full text-sm text-left border-collapse">
           <thead className="sticky top-0 bg-white shadow-sm z-10">
             <tr className="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase tracking-wider">
