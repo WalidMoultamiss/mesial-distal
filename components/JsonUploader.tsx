@@ -10,19 +10,24 @@ interface JsonUploaderProps {
 const PRESETS = [
   { 
     id: 'f411c674-7e0c-435c-87bf-d0a6cd3e1709', 
-    label: 'Case 1', 
+    label: 'Case 1 - Mehdi B', 
     url: 'https://downloads-default.nemocloud-services.com/DownloadUploadService/nemobox/app/workspace/patient/documents/editor/f411c674-7e0c-435c-87bf-d0a6cd3e1709?currentPage=%7B%22page%22:1,%22size%22:10%7D&patientId=3cf398fe-b855-4394-8760-7d4c0b20b7e6&centerId=293-52-09-19'
   },
   { 
     id: 'b6374d75-81a6-4a38-af29-e7e230e5182a', 
-    label: 'Case 2', 
+    label: 'Case 2 - Kenza B', 
     url: 'https://downloads-default.nemocloud-services.com/DownloadUploadService/nemobox/app/workspace/patient/documents/editor/b6374d75-81a6-4a38-af29-e7e230e5182a?currentPage=%7B%22page%22:1,%22size%22:10%7D&patientId=64169f8e-fee6-453d-9de2-802028bdecaa&centerId=293-52-09-19'
   },
   { 
     id: '56c20be7-a184-48ee-8069-97322ca60b82', 
-    label: 'Case 3', 
+    label: 'Case 3 - ', 
     url: 'https://downloads-default.nemocloud-services.com/DownloadUploadService/nemobox/app/workspace/patient/documents/editor/56c20be7-a184-48ee-8069-97322ca60b82?currentPage=%7B%22page%22:1,%22size%22:10%7D&patientId=a7969c67-cd55-4e00-a161-26b9ad1ad79a&centerId=293-52-09-19'
-  }
+  },
+  { 
+    id: '60d2a4c2-a52c-4bf3-97eb-c49e54bf73a1', 
+    label: 'Case 4 - hilali', 
+    url: 'https://downloads-default.nemocloud-services.com/DownloadUploadService/nemobox/app/workspace/patient/documents/editor/60d2a4c2-a52c-4bf3-97eb-c49e54bf73a1?currentPage=%7B%22page%22:0,%22size%22:20%7D&patientId=26632f66-78c1-4fa0-a50c-7aa5f8c0af91&centerId=293-52-09-19'
+  },
 ];
 
 const SAMPLE_JSON = {
